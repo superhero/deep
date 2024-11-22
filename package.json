@@ -1,0 +1,24 @@
+{
+  "name": "@superhero/deep",
+  "version": "4.0.0",
+  "description": "A collection of deep structure operations",
+  "keywords": ["deep", "assign", "clone", "freeze", "merge"],
+  "main": "index.js",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./*": "./*.js"
+  },
+  "scripts": {
+    "test": "node --trace-warnings --test --experimental-test-coverage"
+  },
+  "author": {
+    "name": "Erik Landvall",
+    "email": "erik@landvall.se"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/superhero/deep"
+  }
+}

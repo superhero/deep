@@ -1,0 +1,10 @@
+{
+  "locator":
+  {
+    "@superhero/deep"         : true,
+    "@superhero/deep/assign"  : true,
+    "@superhero/deep/clone"   : true,
+    "@superhero/deep/freeze"  : true,
+    "@superhero/deep/merge"   : true
+  }
+}
