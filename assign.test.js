@@ -4,25 +4,25 @@ import deepassign       from '@superhero/deep/assign'
 
 suite('@superhero/deep/assign', () =>
 {
-  test('Merges arrays correctly', () => 
+  test('Assigns arrays correctly', () => 
   {
     const 
       a         = [1, 2, 3],
       b         = [3, 4, 5],
       expected  = [1, 2, 3, 4, 5]
   
-    deepassign.assign(a, b)
+    deepassign(a, b)
     assert.deepStrictEqual(a, expected, 'Arrays should merge with unique values')
   })
 
-  test('Merges objects correctly', () => 
+  test('Assigns objects correctly', () => 
   {
     const 
       a         = { foo: 1, bar: { baz: 2 } },
-      b         = { bar: { qux: 3 }, hello: 'world' },
-      expected  = { foo: 1, bar: { baz: 2, qux: 3 }, hello: 'world' }
+      b         = { foo: 2, bar: { qux: 3 }, hello: 'world' },
+      expected  = { foo: 2, bar: { baz: 2, qux: 3 }, hello: 'world' }
   
-    deepassign.assign(a, b)
+    deepassign(a, b)
     assert.deepStrictEqual(a, expected, 'Objects should deep merge')
   })
   
@@ -33,7 +33,7 @@ suite('@superhero/deep/assign', () =>
       b         = { foo: 2 },
       expected  = { foo: 2 }
   
-    deepassign.assign(a, b)
+    deepassign(a, b)
     assert.deepStrictEqual(a, expected, 'Properties should be overwritten')
   })
   
@@ -44,7 +44,7 @@ suite('@superhero/deep/assign', () =>
       b         = { foo: undefined },
       expected  = { foo: 1 }
   
-    deepassign.assign(a, b)
+    deepassign(a, b)
     assert.deepStrictEqual(a, expected, 'Undefined values should not overwrite existing properties')
   })
 
@@ -66,7 +66,7 @@ suite('@superhero/deep/assign', () =>
       
         const b = { foo: 2 }
       
-        deepassign.assign(a, b)
+        deepassign(a, b)
       
         const descriptor_a = Object.getOwnPropertyDescriptor(a, 'foo')
       
@@ -90,7 +90,7 @@ suite('@superhero/deep/assign', () =>
       
         const b = { foo: 2 }
       
-        deepassign.assign(a, b)
+        deepassign(a, b)
       
         const descriptor_a = Object.getOwnPropertyDescriptor(a, 'foo')
       
@@ -114,7 +114,7 @@ suite('@superhero/deep/assign', () =>
       
         const b = { foo: 2 }
       
-        deepassign.assign(a, b)
+        deepassign(a, b)
       
         const descriptor_a = Object.getOwnPropertyDescriptor(a, 'foo')
       
@@ -141,7 +141,7 @@ suite('@superhero/deep/assign', () =>
           enumerable    : false
         })
       
-        deepassign.assign(a, b)
+        deepassign(a, b)
       
         const descriptor_a = Object.getOwnPropertyDescriptor(a, 'foo')
       
@@ -160,7 +160,7 @@ suite('@superhero/deep/assign', () =>
       b         = { foo: [2, 3] },
       expected  = { foo: [1, 2, 3] }
   
-    deepassign.assign(a, b)
+    deepassign(a, b)
     assert.deepStrictEqual(a, expected, 'Nested arrays should merge with unique values')
   })
   
@@ -171,7 +171,7 @@ suite('@superhero/deep/assign', () =>
       b         = { foo: { bar: { qux: 2 }}},
       expected  = { foo: { bar: { baz: 1, qux: 2 }}}
   
-    deepassign.assign(a, b)
+    deepassign(a, b)
     assert.deepStrictEqual(a, expected, 'Nested objects should deep merge')
   })
   
@@ -182,7 +182,7 @@ suite('@superhero/deep/assign', () =>
       b         = { bar: 2 },
       expected  = { foo: 1, bar: 2 }
   
-    deepassign.assign(a, b)
+    deepassign(a, b)
     assert.deepStrictEqual(a, expected, 'Objects without conflicts should merge correctly')
   })
 })

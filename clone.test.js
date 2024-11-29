@@ -8,8 +8,8 @@ suite('@superhero/deep/clone', () =>
   {
     const 
       obj     = { foo: 'bar', baz: 42 },
-      result  = deepclone.clone(obj),
-      legacy  = deepclone.clone(obj, true)
+      result  = deepclone(obj),
+      legacy  = deepclone(obj, true)
 
     assert.deepStrictEqual(result, obj, 'Cloned object should be equal to the original')
     assert.deepStrictEqual(legacy, obj, 'Cloned object should be equal to the original (legacy mode)')
@@ -23,8 +23,8 @@ suite('@superhero/deep/clone', () =>
     const obj = { foo: { bar: { baz: 'qux' } } }
 
     const 
-      result = deepclone.clone(obj),
-      legacy = deepclone.clone(obj, true)
+      result = deepclone(obj),
+      legacy = deepclone(obj, true)
 
     assert.deepStrictEqual(result, obj, 'Cloned nested object should be equal to the original')
     assert.deepStrictEqual(legacy, obj, 'Cloned nested object should be equal to the original (legacy mode)')
@@ -38,8 +38,8 @@ suite('@superhero/deep/clone', () =>
     const arr = [1, 2, 3, [4, 5]]
 
     const 
-      result = deepclone.clone(arr),
-      legacy = deepclone.clone(arr, true)
+      result = deepclone(arr),
+      legacy = deepclone(arr, true)
 
     assert.deepStrictEqual(result, arr, 'Cloned array should be equal to the original')
     assert.deepStrictEqual(legacy, arr, 'Cloned array should be equal to the original (legacy mode)')
@@ -63,7 +63,7 @@ suite('@superhero/deep/clone', () =>
       const obj = {}
       obj.self = obj
   
-      const result = deepclone.clone(obj)
+      const result = deepclone(obj)
   
       assert.strictEqual(result.self, result, 'Circular references should be preserved in the clone')
     })
@@ -73,7 +73,7 @@ suite('@superhero/deep/clone', () =>
       const obj = Object.create(null)
       obj.foo = 'bar'
   
-      const result = deepclone.clone(obj)
+      const result = deepclone(obj)
   
       assert.deepEqual(result, obj, 'Cloned object with null prototype should be equal to the original')
       assert.notStrictEqual(result, obj, 'Cloned object with null prototype should not share reference with the original')

@@ -1,4 +1,7 @@
-export * from '@superhero/deep/assign'
-export * from '@superhero/deep/clone'
-export * from '@superhero/deep/freeze'
-export * from '@superhero/deep/merge'
+import assign from '@superhero/deep/assign'
+import clone  from '@superhero/deep/clone'
+import freeze from '@superhero/deep/freeze'
+import merge  from '@superhero/deep/merge'
+
+export          { assign, clone, freeze, merge }
+export default  { assign, clone, freeze, merge }

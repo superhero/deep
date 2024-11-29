@@ -11,7 +11,7 @@ suite('@superhero/deep/merge', () =>
       b         = [2, 3, 4],
       expected  = [1, 2, 3, 4]
     
-    const result = deepmerge.merge(a, b)
+    const result = deepmerge(a, b)
     assert.deepStrictEqual(result, expected, 'Arrays should merge with unique values')
   })
 
@@ -22,7 +22,7 @@ suite('@superhero/deep/merge', () =>
       b         = [1, 2, 3],
       expected  = [2, 3, 4, 1]
     
-    const result = deepmerge.merge(a, b)
+    const result = deepmerge(a, b)
     assert.deepStrictEqual(result, expected, 'Order of values should be preserved')
   })
 
@@ -33,7 +33,7 @@ suite('@superhero/deep/merge', () =>
       b         = [],
       expected  = [1, 2, 3]
     
-    const result = deepmerge.merge(a, b)
+    const result = deepmerge(a, b)
     assert.deepStrictEqual(result, expected, 'Merging with empty array should not alter values')
   })
 
@@ -44,7 +44,7 @@ suite('@superhero/deep/merge', () =>
       b         = [2, 2, 3, 3],
       expected  = [1, 2, 3]
     
-    const result = deepmerge.merge(a, b)
+    const result = deepmerge(a, b)
     assert.deepStrictEqual(result, expected, 'Duplicate values should be removed')
   })
 
@@ -71,7 +71,7 @@ suite('@superhero/deep/merge', () =>
     })
 
     const 
-      result      = deepmerge.merge(a, b),
+      result      = deepmerge(a, b),
       descriptor  = Object.getOwnPropertyDescriptor(result, 'foo')
 
     assert.strictEqual(descriptor.value,        2,      'Value should prioritize the second object')
@@ -103,7 +103,7 @@ suite('@superhero/deep/merge', () =>
     })
 
     const 
-      result      = deepmerge.merge(a, b),
+      result      = deepmerge(a, b),
       descriptor  = Object.getOwnPropertyDescriptor(result, 'foo')
 
     assert.strictEqual(descriptor.value,        2,      'Value should prioritize the second object')
@@ -119,7 +119,7 @@ suite('@superhero/deep/merge', () =>
       b         = { foo: { baz: 2 } },
       expected  = { foo: { bar: 1, baz: 2 } }
     
-    const result = deepmerge.merge(a, b)
+    const result = deepmerge(a, b)
     assert.deepStrictEqual(result, expected, 'Nested objects should merge correctly')
   })
 
@@ -132,7 +132,7 @@ suite('@superhero/deep/merge', () =>
     a.self = a
     b.self = b
 
-    const result = deepmerge.merge(a, b)
+    const result = deepmerge(a, b)
 
     assert.strictEqual(result.self, b.self, 'Circular references should not merge further')
   })
@@ -146,8 +146,8 @@ suite('@superhero/deep/merge', () =>
     b.foo.bar = b
 
     const 
-      resultA = deepmerge.merge(a, b),
-      resultB = deepmerge.merge(b, a)
+      resultA = deepmerge(a, b),
+      resultB = deepmerge(b, a)
 
       assert.strictEqual(resultA.foo.bar.foo.bar, b,      'Circular references should not interfare with the merged result')
       assert.strictEqual(resultB.foo.bar.foo.bar, 'baz',  'Circular references should not interfare with the merged result')
@@ -160,7 +160,7 @@ suite('@superhero/deep/merge', () =>
       b         = { foo: 42 },
       expected  = { foo: 42 }
     
-    const result = deepmerge.merge(a, b)
+    const result = deepmerge(a, b)
     assert.deepStrictEqual(result, expected, 'Non-object types should replace with the second value')
   })
 
@@ -172,10 +172,10 @@ suite('@superhero/deep/merge', () =>
       c         = { baz: 3 },
       expected  = { foo: 1, bar: 2, baz: 3 }
 
-    const resultA = deepmerge.merge(a, b, c)
+    const resultA = deepmerge(a, b, c)
     assert.deepStrictEqual(resultA, expected, 'Multiple objects should merge sequentially')
 
-    const resultB = deepmerge.merge(a, b, undefined, c)
+    const resultB = deepmerge(a, b, undefined, c)
     assert.deepStrictEqual(resultB, expected, 'Ignore undefined attributes')
   })
 })

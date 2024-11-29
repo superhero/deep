@@ -8,7 +8,7 @@ suite('@superhero/deep/freeze', () =>
   {
     const obj = { foo: 'bar' }
 
-    deepfreeze.freeze(obj)
+    deepfreeze(obj)
 
     assert.throws(() => { obj.foo = 'baz' }, TypeError, 'Should not allow modifying a frozen object')
     assert.strictEqual(Object.isFrozen(obj), true,      'Object should be frozen')
@@ -18,7 +18,7 @@ suite('@superhero/deep/freeze', () =>
   {
     const obj = { foo: { bar: { baz: 'qux' } } }
 
-    deepfreeze.freeze(obj)
+    deepfreeze(obj)
 
     assert.throws(() => { obj.foo.bar.baz = 'changed' }, TypeError, 'Should not allow modifying nested properties')
     assert.strictEqual(Object.isFrozen(obj.foo.bar),  true, 'Nested object should be frozen')
@@ -30,7 +30,7 @@ suite('@superhero/deep/freeze', () =>
     const obj = {}
     obj.self = obj
 
-    deepfreeze.freeze(obj)
+    deepfreeze(obj)
 
     assert.strictEqual(Object.isFrozen(obj),      true, 'Object with circular reference should be frozen')
     assert.strictEqual(Object.isFrozen(obj.self), true, 'Circular reference should also be frozen')
@@ -41,7 +41,7 @@ suite('@superhero/deep/freeze', () =>
     const sym = Symbol('test')
     const obj = { [sym]: 'value' }
 
-    deepfreeze.freeze(obj)
+    deepfreeze(obj)
 
     assert.throws(() => { obj[sym] = 'new value' }, TypeError,  'Should not allow modifying properties with symbols')
     assert.strictEqual(Object.isFrozen(obj), true,              'Object with symbols should be frozen')
@@ -51,7 +51,7 @@ suite('@superhero/deep/freeze', () =>
   {
     const obj = Object.freeze({ foo: 'bar' })
 
-    deepfreeze.freeze(obj) // Should not throw an error
+    deepfreeze(obj) // Should not throw an error
     assert.strictEqual(Object.isFrozen(obj), true, 'Already frozen object should remain frozen')
   })
 
@@ -66,7 +66,7 @@ suite('@superhero/deep/freeze', () =>
       writable      : true
     })
 
-    deepfreeze.freeze(obj)
+    deepfreeze(obj)
 
     assert.throws(() => { obj.foo = 'baz' }, TypeError, 'Should not allow modifying non-enumerable properties')
     assert.strictEqual(Object.isFrozen(obj), true,      'Object with non-enumerable properties should be frozen')
@@ -76,7 +76,7 @@ suite('@superhero/deep/freeze', () =>
   {
     const arr = [1, 2, 3]
 
-    deepfreeze.freeze(arr)
+    deepfreeze(arr)
 
     assert.throws(() => { arr[0] = 4 }, TypeError, 'Should not allow modifying an array')
     assert.strictEqual(Object.isFrozen(arr), true, 'Array should be frozen')
@@ -87,7 +87,7 @@ suite('@superhero/deep/freeze', () =>
     const obj = Object.create(null)
     obj.foo = 'bar'
 
-    deepfreeze.freeze(obj)
+    deepfreeze(obj)
 
     assert.throws(() => { obj.foo = 'baz' }, TypeError, 'Should not allow modifying properties of objects with null prototype')
     assert.strictEqual(Object.isFrozen(obj), true,      'Object with null prototype should be frozen')
@@ -112,7 +112,7 @@ suite('@superhero/deep/freeze', () =>
       writable      : true
     })
 
-    deepfreeze.freeze(obj)
+    deepfreeze(obj)
 
     assert.throws(() => { obj.nested.baz  = 'changed'   }, TypeError, 'Should not allow modifying nested properties')
     assert.throws(() => { obj[sym]        = 'new value' }, TypeError, 'Should not allow modifying symbol properties')

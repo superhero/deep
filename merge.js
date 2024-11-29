@@ -56,97 +56,94 @@
  * @example if array "a" with values [1, 1, 2, 2] is merged with array "b" with
  * values [2, 2, 3, 3], the new array will have values [1, 2, 3].
  */
-export default new class DeepMerge
+export default function merge(a, b, ...c)
 {
-  merge(a, b, ...c)
-  {
-    const 
-      seen    = new WeakSet,
-      output  = this.#merge(a, b, seen)
+  const 
+    seen    = new WeakSet,
+    output  = mergeAandB(a, b, seen)
 
-    return c.length
-    ? this.merge(output, ...c)
-    : output
+  return c.length
+  ? merge(output, ...c)
+  : output
+}
+
+function mergeAandB(a, b, seen)
+{
+  if(b === undefined)
+  {
+    return a
   }
 
-  #merge(a, b, seen)
+  const
+    aType = Object.prototype.toString.call(a),
+    bType = Object.prototype.toString.call(b)
+
+  if('[object Array]' === aType
+  && '[object Array]' === bType)
   {
-    if(b === undefined)
-    {
-      return a
-    }
+    return mergeArray(a, b)
+  }
 
-    const
-      aType = Object.prototype.toString.call(a),
-      bType = Object.prototype.toString.call(b)
+  if('[object Object]' === aType
+  && '[object Object]' === bType)
+  {
+    return mergeObject(a, b, seen)
+  }
 
-    if('[object Array]' === aType
-    && '[object Array]' === bType)
-    {
-      return this.#mergeArray(a, b)
-    }
+  return b
+}
 
-    if('[object Object]' === aType
-    && '[object Object]' === bType)
-    {
-      return this.#mergeObject(a, b, seen)
-    }
+function mergeArray(a, b)
+{
+  return [...new Set(a.concat(b))]
+}
 
+function mergeObject(a, b, seen)
+{
+  if(seen.has(a))
+  {
     return b
   }
 
-  #mergeArray(a, b)
+  seen.add(a)
+
+  const output = {}
+
+  for(const key of Object.getOwnPropertyNames(a))
   {
-    return [...new Set(a.concat(b))]
+    if(key in b)
+    {
+      continue
+    }
+    else
+    {
+      const descriptor = Object.getOwnPropertyDescriptor(a, key)
+      Object.defineProperty(output, key, descriptor)
+    }
   }
 
-  #mergeObject(a, b, seen)
+  for(const key of Object.getOwnPropertyNames(b))
   {
-    if(seen.has(a))
+    if(key in a)
     {
-      return b
+      const
+        descriptor_a = Object.getOwnPropertyDescriptor(a, key),
+        descriptor_b = Object.getOwnPropertyDescriptor(b, key)
+
+      Object.defineProperty(output, key,
+      {
+        configurable : descriptor_a.configurable && descriptor_b.configurable,
+        enumerable   : descriptor_a.enumerable   && descriptor_b.enumerable,
+        writable     : descriptor_a.writable     && descriptor_b.writable,
+        value        : mergeAandB(a[key], b[key], seen)
+      })
     }
-
-    seen.add(a)
-
-    const output = {}
-
-    for(const key of Object.getOwnPropertyNames(a))
+    else
     {
-      if(key in b)
-      {
-        continue
-      }
-      else
-      {
-        const descriptor = Object.getOwnPropertyDescriptor(a, key)
-        Object.defineProperty(output, key, descriptor)
-      }
+      const descriptor = Object.getOwnPropertyDescriptor(b, key)
+      Object.defineProperty(output, key, descriptor)
     }
-
-    for(const key of Object.getOwnPropertyNames(b))
-    {
-      if(key in a)
-      {
-        const
-          descriptor_a = Object.getOwnPropertyDescriptor(a, key),
-          descriptor_b = Object.getOwnPropertyDescriptor(b, key)
-  
-        Object.defineProperty(output, key,
-        {
-          configurable : descriptor_a.configurable && descriptor_b.configurable,
-          enumerable   : descriptor_a.enumerable   && descriptor_b.enumerable,
-          writable     : descriptor_a.writable     && descriptor_b.writable,
-          value        : this.#merge(a[key], b[key], seen)
-        })
-      }
-      else
-      {
-        const descriptor = Object.getOwnPropertyDescriptor(b, key)
-        Object.defineProperty(output, key, descriptor)
-      }
-    }
-
-    return output
   }
+
+  return output
 }
