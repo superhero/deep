@@ -1,6 +1,6 @@
 {
   "name": "@superhero/deep",
-  "version": "4.1.0",
+  "version": "4.2.0",
   "description": "A collection of deep structure operations",
   "keywords": ["deep", "assign", "clone", "freeze", "merge"],
   "main": "index.js",

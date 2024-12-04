@@ -8,75 +8,76 @@ suite('@superhero/deep/clone', () =>
   {
     const 
       obj     = { foo: 'bar', baz: 42 },
-      result  = deepclone(obj),
-      legacy  = deepclone(obj, true)
+      cloned  = deepclone(obj)
 
-    assert.deepStrictEqual(result, obj, 'Cloned object should be equal to the original')
-    assert.deepStrictEqual(legacy, obj, 'Cloned object should be equal to the original (legacy mode)')
-
-    assert.notStrictEqual(result, obj, 'Cloned object should not be the same reference as the original')
-    assert.notStrictEqual(legacy, obj, 'Cloned object should not be the same reference as the original (legacy mode)')
+    assert.deepStrictEqual(cloned, obj, 'Cloned object should be equal to the original')
+    assert.notStrictEqual(cloned, obj, 'Not the same reference as the original')
   })
 
   test('Clones nested objects', () =>
   {
-    const obj = { foo: { bar: { baz: 'qux' } } }
-
     const 
-      result = deepclone(obj),
-      legacy = deepclone(obj, true)
+      obj     = { foo: { bar: { baz: 'qux' } } },
+      cloned  = deepclone(obj)
 
-    assert.deepStrictEqual(result, obj, 'Cloned nested object should be equal to the original')
-    assert.deepStrictEqual(legacy, obj, 'Cloned nested object should be equal to the original (legacy mode)')
+    assert.deepStrictEqual(cloned, obj, 'Cloned nested object should be equal to the original')
+    assert.notStrictEqual(cloned.foo, obj.foo, 'Not the same reference as the original')
+  })
 
-    assert.notStrictEqual(result.foo, obj.foo, 'Cloned nested object should not share reference with the original')
-    assert.notStrictEqual(legacy.foo, obj.foo, 'Cloned nested object should not share reference with the original (legacy mode)')
+  test('Preserves descriptors', () =>
+  {
+    const origin = {}
+
+    Object.defineProperty(origin, 'foo', { value: {}, enumerable: true,  writable: true,  configurable: true  })
+    Object.defineProperty(origin, 'bar', { value: {}, enumerable: false, writable: true,  configurable: true  })
+    Object.defineProperty(origin, 'baz', { value: {}, enumerable: false, writable: false, configurable: true  })
+    Object.defineProperty(origin, 'qux', { value: {}, enumerable: false, writable: false, configurable: false })
+
+    const cloned = deepclone(origin)
+
+    assert.deepStrictEqual(cloned,    origin,     'Cloned nested object should be equal to the original')
+    assert.notStrictEqual(cloned,     origin,     'Not the same reference as the original')
+    assert.notStrictEqual(cloned.foo, origin.foo, 'Cloned nested object should not share reference with the original')
+
+    const
+      clonedDescriptors = Object.getOwnPropertyDescriptors(cloned),
+      originDescriptors = Object.getOwnPropertyDescriptors(origin)
+
+    for(const key in originDescriptors)
+    {
+      assert.equal(clonedDescriptors[key].enumerable,    originDescriptors[key].enumerable)
+      assert.equal(clonedDescriptors[key].writable,      originDescriptors[key].writable)
+      assert.equal(clonedDescriptors[key].configurable,  originDescriptors[key].configurable)
+    }
   })
 
   test('Clones arrays', () =>
   {
-    const arr = [1, 2, 3, [4, 5]]
-
     const 
-      result = deepclone(arr),
-      legacy = deepclone(arr, true)
+      array   = [1, 2, 3, [4, 5]],
+      cloned  = deepclone(array)
 
-    assert.deepStrictEqual(result, arr, 'Cloned array should be equal to the original')
-    assert.deepStrictEqual(legacy, arr, 'Cloned array should be equal to the original (legacy mode)')
-
-    assert.notStrictEqual(result, arr, 'Cloned array should not share reference with the original')
-    assert.notStrictEqual(legacy, arr, 'Cloned array should not share reference with the original (legacy mode)')
-
-    assert.notStrictEqual(result[3], arr[3], 'Nested array in clone should not share reference with the original')
-    assert.notStrictEqual(legacy[3], arr[3], 'Nested array in clone should not share reference with the original (legacy mode)')
+    assert.deepStrictEqual(cloned, array, 'Cloned array should be equal to the original')
+    assert.notStrictEqual(cloned, array, 'Not the same reference as the original')
+    assert.notStrictEqual(cloned[3], array[3], 'Nested array in clone should not share reference with the original')
   })
 
-  if(false === !!structuredClone)
+  test('Handles circular references', () =>
   {
-    test.skip('Handles circular references (structuredClone not available)')
-    test.skip('Clones objects with null prototype (structuredClone not available)')
-  }
-  else
+    const obj = {}
+    obj.self = obj
+
+    const cloned = deepclone(obj)
+    assert.strictEqual(cloned.self, obj, 'Circular references should be preserved in the clone')
+  })
+
+  test('Clones objects with null prototype', () =>
   {
-    test('Handles circular references', () =>
-    {
-      const obj = {}
-      obj.self = obj
-  
-      const result = deepclone(obj)
-  
-      assert.strictEqual(result.self, result, 'Circular references should be preserved in the clone')
-    })
-  
-    test('Clones objects with null prototype', () =>
-    {
-      const obj = Object.create(null)
-      obj.foo = 'bar'
-  
-      const result = deepclone(obj)
-  
-      assert.deepEqual(result, obj, 'Cloned object with null prototype should be equal to the original')
-      assert.notStrictEqual(result, obj, 'Cloned object with null prototype should not share reference with the original')
-    })
-  }
+    const obj = Object.create(null)
+    obj.foo = 'bar'
+
+    const cloned = deepclone(obj)
+    assert.deepEqual(cloned, obj, 'Cloned object with null prototype should be equal to the original')
+    assert.notStrictEqual(cloned, obj, 'Not the same reference as the original')
+  })
 })
