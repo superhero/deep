@@ -10,6 +10,11 @@ function assignB2A(a, b)
     return a
   }
 
+  if(Object.is(a, b))
+  {
+    return a
+  }
+
   if(Object.prototype.toString.call(a) === '[object Array]'
   && Object.prototype.toString.call(b) === '[object Array]')
   {

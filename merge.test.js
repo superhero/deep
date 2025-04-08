@@ -134,7 +134,7 @@ suite('@superhero/deep/merge', () =>
 
     const result = deepmerge(a, b)
 
-    assert.strictEqual(result.self, b.self, 'Circular references should not merge further')
+    assert.deepStrictEqual(result.self, b.self, 'Circular references should not merge further')
   })
 
   test('Stops when nested and with circular references', () =>
@@ -149,8 +149,8 @@ suite('@superhero/deep/merge', () =>
       resultA = deepmerge(a, b),
       resultB = deepmerge(b, a)
 
-      assert.strictEqual(resultA.foo.bar.foo.bar, b,      'Circular references should not interfare with the merged result')
-      assert.strictEqual(resultB.foo.bar.foo.bar, 'baz',  'Circular references should not interfare with the merged result')
+    assert.deepStrictEqual(resultA.foo.bar.foo.bar, b,      'Circular references should not interfare with the merged result')
+    assert.deepStrictEqual(resultB.foo.bar.foo.bar, 'baz',  'Circular references should not interfare with the merged result')
   })
 
   test('Returns second value for non-object types', () =>

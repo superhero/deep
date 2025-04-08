@@ -1,3 +1,5 @@
+import deepclone from '@superhero/deep/clone'
+
 /**
  * When merging two objects [object Object], a new object is created with the 
  * properties of both objects defined. The descriptor of the property in the 
@@ -64,12 +66,17 @@ export default function merge(a, b, ...c)
 
   return c.length
   ? merge(output, ...c)
-  : output
+  : deepclone(output)
 }
 
 function mergeAandB(a, b, seen)
 {
   if(b === undefined)
+  {
+    return a
+  }
+
+  if(Object.is(a, b))
   {
     return a
   }

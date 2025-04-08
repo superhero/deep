@@ -101,7 +101,40 @@ console.log(clone === obj) // false
 
 ---
 
-## 5. **Deep**
+## 5. **DeepIntersect**
+
+### Purpose:
+Performs a deep intersection between two or more values. Supports objects, arrays, and nested structures, and handles circular references. Values are strictly compared when considered intersecting.
+
+### Features:
+- Intersects arrays by values.
+- Intersects objects only when the key exists in all sources and the values intersect deeply.
+- Preserves intersected restrictive property descriptors (`writable`, `configurable`, `enumerable`).
+- Detects and throws on circular references.
+
+### Example:
+```javascript
+import deepintersect from '@superhero/deep/intersect'
+
+const a = { foo: { bar: 1 }, arr: [1, 2, 3] }
+const b = { foo: { bar: 1, baz: 2 }, arr: [1, 4, 3] }
+
+const result = deepintersect(a, b)
+
+console.log(result)
+// { foo: { bar: 1 }, arr: [1, 3] }
+```
+
+#### Note:
+- If two values are loosely equal, but of different types, they do not intersect.
+
+- Arrays with nested objects can only be compared if the nested structure shares the same index between the compared arrays.
+
+- A circular structure throws a CircularReferenceError (ReferenceError) with the code `E_DEEP_INTERSECT_CIRCULAR_REFERENCE`.
+
+---
+
+## 6. **Deep**
 
 ### Purpose:
 Makes the functions accessible through the imported default object.
@@ -117,16 +150,18 @@ import deep from '@superhero/deep'
 deep.assign(/* ... */)
 deep.clone(/* ... */)
 deep.freeze(/* ... */)
+deep.intersect(/* ... */)
 deep.merge(/* ... */)
 ```
 
 ### Example:
 ```javascript
-import { assign, clone, freeze, merge } from '@superhero/deep'
+import { assign, clone, freeze, intersect, merge } from '@superhero/deep'
 
 assign(/* ... */)
 clone(/* ... */)
 freeze(/* ... */)
+intersect(/* ... */)
 merge(/* ... */)
 ```
 
@@ -145,87 +180,104 @@ npm test
 
 ```
 ▶ @superhero/deep/assign
-  ✔ Assigns arrays correctly (3.167398ms)
-  ✔ Assigns objects correctly (0.763768ms)
-  ✔ Overwrites non-object properties correctly (0.347727ms)
-  ✔ Handles undefined values correctly (0.521744ms)
+  ✔ Assigns arrays correctly (3.552823ms)
+  ✔ Assigns objects correctly (0.702394ms)
+  ✔ Overwrites non-object properties correctly (1.106746ms)
+  ✔ Handles undefined values correctly (0.592877ms)
 
   ▶ Descriptor properties
     ▶ Retains
-      ✔ non-writable, non-configurable and non-enumarable (0.474666ms)
-      ✔ writable but non-configurable and non-enumarable (0.649244ms)
-      ✔ writable and configurable but non-enumarable (0.298073ms)
-    ✔ Retains (1.918778ms)
+      ✔ non-writable, non-configurable and non-enumarable (0.774514ms)
+      ✔ writable but non-configurable and non-enumarable (0.490026ms)
+      ✔ writable and configurable but non-enumarable (0.314062ms)
+    ✔ Retains (2.377181ms)
 
     ▶ Assigns
-      ✔ non-writable, non-configurable and non-enumarable (0.485428ms)
-    ✔ Assigns (0.889839ms)
-  ✔ Descriptor properties (3.74915ms)
-  
-  ✔ Merges nested arrays correctly (1.898073ms)
-  ✔ Merges nested objects correctly (0.761838ms)
-  ✔ Does not alter objects with no conflicts (0.277694ms)
-✔ @superhero/deep/assign (14.053485ms)
+      ✔ non-writable, non-configurable and non-enumarable (0.415235ms)
+    ✔ Assigns (0.824789ms)
+  ✔ Descriptor properties (3.881836ms)
+
+  ✔ Merges nested arrays correctly (6.642858ms)
+  ✔ Merges nested objects correctly (0.731397ms)
+  ✔ Does not alter objects with no conflicts (0.27423ms)
+✔ @superhero/deep/assign (20.322649ms)
 
 ▶ @superhero/deep/clone
-  ✔ Clones simple objects (7.235299ms)
-  ✔ Clones nested objects (0.634553ms)
-  ✔ Clones arrays (0.650244ms)
-  ✔ Handles circular references (0.382144ms)
-  ✔ Clones objects with null prototype (0.375334ms)
-✔ @superhero/deep/clone (11.89498ms)
+  ✔ Clones simple objects (6.103605ms)
+  ✔ Clones nested objects (0.771236ms)
+  ✔ Preserves descriptors (1.57539ms)
+  ✔ Clones arrays (1.604074ms)
+  ✔ Handles circular references (0.507477ms)
+  ✔ Clones objects with null prototype (1.230476ms)
+✔ @superhero/deep/clone (14.513864ms)
 
 ▶ @superhero/deep/freeze
-  ✔ Freezes a simple object (3.683567ms)
-  ✔ Freezes nested objects recursively (0.406919ms)
-  ✔ Handles circular references gracefully (0.309979ms)
-  ✔ Freezes objects with symbols (0.405137ms)
-  ✔ Handles already frozen objects without error (0.337038ms)
-  ✔ Freezes objects with non-enumerable properties (0.354681ms)
-  ✔ Freezes arrays (0.662049ms)
-  ✔ Handles objects with null prototype (0.387428ms)
-  ✔ Freezes objects with multiple property types (0.626902ms)
-✔ @superhero/deep/freeze (10.607326ms)
+  ✔ Freezes a simple object (2.735609ms)
+  ✔ Freezes nested objects recursively (0.40638ms)
+  ✔ Handles circular references gracefully (0.781639ms)
+  ✔ Freezes objects with symbols (0.455776ms)
+  ✔ Handles already frozen objects without error (0.342712ms)
+  ✔ Freezes objects with non-enumerable properties (0.455515ms)
+  ✔ Freezes arrays (0.61924ms)
+  ✔ Handles objects with null prototype (0.57424ms)
+  ✔ Freezes objects with multiple property types (0.984788ms)
+✔ @superhero/deep/freeze (12.988297ms)
 
 ▶ @superhero/deep
-  ✔ All functions are accessible as a member to the default import object (1.734551ms)
-  ✔ All functions are accessible to import from the default import object (0.255022ms)
-✔ @superhero/deep (5.188429ms)
+  ✔ All functions are accessible as a member to the default import object (1.908797ms)
+  ✔ All functions are accessible to import from the default import object (0.603152ms)
+✔ @superhero/deep (7.176949ms)
+
+▶ @superhero/deep/intersect
+  ✔ Intersects arrays by value and position (5.556412ms)
+  ✔ Intersects nested arrays (0.312899ms)
+  ✔ Handles empty array intersection (0.297251ms)
+  ✔ Intersects objects with matching keys and values (0.554782ms)
+  ✔ Deeply intersects nested objects (0.568448ms)
+  ✔ Intersection stops at type mismatch (0.278157ms)
+  ✔ Throws on circular references (1.779685ms)
+  ✔ Intersects arrays with undefined positions (0.702569ms)
+  ✔ Handles intersection of primitive types (0.525931ms)
+  ✔ Returns undefined for non-intersecting primitives (0.867342ms)
+  ✔ Handles multiple sequential intersections (0.836957ms)
+✔ @superhero/deep/intersect (15.753992ms)
 
 ▶ @superhero/deep/merge
-  ✔ Merges arrays with unique values (3.271451ms)
-  ✔ Merges arrays with order preserved (0.455376ms)
-  ✔ Handles empty arrays correctly (0.283857ms)
-  ✔ Handles arrays with duplicate values (0.538911ms)
-  ✔ Merges objects and prioritizes restrictive descriptors (0.592729ms)
-  ✔ Merges objects with non-enumerable properties (0.343159ms)
-  ✔ Handles nested object merging (0.359878ms)
-  ✔ Stops at circular references (0.554345ms)
-  ✔ Stops when nested and with circular references (0.667265ms)
-  ✔ Returns second value for non-object types (0.744991ms)
-  ✔ Handles multiple merges sequentially (0.327608ms)
-✔ @superhero/deep/merge (11.803686ms)
+  ✔ Merges arrays with unique values (4.014593ms)
+  ✔ Merges arrays with order preserved (0.431737ms)
+  ✔ Handles empty arrays correctly (0.409507ms)
+  ✔ Handles arrays with duplicate values (0.501899ms)
+  ✔ Merges objects and prioritizes restrictive descriptors (0.804508ms)
+  ✔ Merges objects with non-enumerable properties (0.802831ms)
+  ✔ Handles nested object merging (0.709563ms)
+  ✔ Stops at circular references (0.768717ms)
+  ✔ Stops when nested and with circular references (1.386111ms)
+  ✔ Returns second value for non-object types (1.438328ms)
+  ✔ Handles multiple merges sequentially (0.494506ms)
+✔ @superhero/deep/merge (14.798621ms)
 
-tests 38
-suites 8
-pass 38
+tests 50
+suites 9
+pass 50
 
------------------------------------------------------------------
-file             | line % | branch % | funcs % | uncovered lines
------------------------------------------------------------------
-assign.js        | 100.00 |   100.00 |  100.00 | 
-assign.test.js   | 100.00 |   100.00 |  100.00 | 
-clone.js         |  95.83 |    92.86 |  100.00 | 22-23
-clone.test.js    | 100.00 |   100.00 |  100.00 | 
-freeze.js        | 100.00 |   100.00 |  100.00 | 
-freeze.test.js   | 100.00 |   100.00 |  100.00 | 
-index.js         | 100.00 |   100.00 |  100.00 | 
-index.test.js    | 100.00 |   100.00 |  100.00 | 
-merge.js         | 100.00 |   100.00 |  100.00 | 
-merge.test.js    | 100.00 |   100.00 |  100.00 | 
------------------------------------------------------------------
-all files        |  99.78 |    99.25 |  100.00 | 
------------------------------------------------------------------
+------------------------------------------------------------------------
+file                | line % | branch % | funcs % | uncovered lines
+------------------------------------------------------------------------
+assign.js           |  97.80 |    96.15 |  100.00 | 15-16
+assign.test.js      | 100.00 |   100.00 |  100.00 | 
+clone.js            |  95.83 |    93.33 |  100.00 | 22-23
+clone.test.js       | 100.00 |   100.00 |  100.00 | 
+freeze.js           | 100.00 |   100.00 |  100.00 | 
+freeze.test.js      | 100.00 |   100.00 |  100.00 | 
+index.js            | 100.00 |   100.00 |  100.00 | 
+index.test.js       | 100.00 |   100.00 |  100.00 | 
+intersect.js        |  94.77 |    91.18 |  100.00 | 70-71 85-86 134-137
+intersect.test.js   | 100.00 |   100.00 |  100.00 | 
+merge.js            |  98.72 |    96.30 |  100.00 | 81-82
+merge.test.js       | 100.00 |   100.00 |  100.00 | 
+------------------------------------------------------------------------
+all files           |  98.84 |    96.81 |  100.00 | 
+------------------------------------------------------------------------
 ```
 
 ---
