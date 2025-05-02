@@ -24,6 +24,32 @@ suite('@superhero/deep/clone', () =>
     assert.notStrictEqual(cloned.foo, obj.foo, 'Not the same reference as the original')
   })
 
+  test('Do not preserves descriptors', () =>
+  {
+    const origin = {}
+
+    Object.defineProperty(origin, 'foo', { value: {}, enumerable: true,  writable: true,  configurable: true  })
+    Object.defineProperty(origin, 'bar', { value: {}, enumerable: false, writable: true,  configurable: true  })
+    Object.defineProperty(origin, 'baz', { value: {}, enumerable: false, writable: false, configurable: true  })
+    Object.defineProperty(origin, 'qux', { value: {}, enumerable: false, writable: false, configurable: false })
+
+    const cloned = deepclone(origin, { preservesImutable: false, preservesEnumerable: false })
+
+    assert.notStrictEqual(cloned,     origin,     'Not the same reference as the original')
+    assert.notStrictEqual(cloned.foo, origin.foo, 'Cloned nested object should not share reference with the original')
+
+    const
+      clonedDescriptors = Object.getOwnPropertyDescriptors(cloned),
+      originDescriptors = Object.getOwnPropertyDescriptors(origin)
+
+    for(const key in originDescriptors)
+    {
+      assert.equal(clonedDescriptors[key].enumerable,    true)
+      assert.equal(clonedDescriptors[key].writable,      true)
+      assert.equal(clonedDescriptors[key].configurable,  true)
+    }
+  })
+
   test('Preserves descriptors', () =>
   {
     const origin = {}
@@ -33,7 +59,7 @@ suite('@superhero/deep/clone', () =>
     Object.defineProperty(origin, 'baz', { value: {}, enumerable: false, writable: false, configurable: true  })
     Object.defineProperty(origin, 'qux', { value: {}, enumerable: false, writable: false, configurable: false })
 
-    const cloned = deepclone(origin)
+    const cloned = deepclone(origin, { preservesImutable: true, preservesEnumerable: true })
 
     assert.deepStrictEqual(cloned,    origin,     'Cloned nested object should be equal to the original')
     assert.notStrictEqual(cloned,     origin,     'Not the same reference as the original')
@@ -49,6 +75,21 @@ suite('@superhero/deep/clone', () =>
       assert.equal(clonedDescriptors[key].writable,      originDescriptors[key].writable)
       assert.equal(clonedDescriptors[key].configurable,  originDescriptors[key].configurable)
     }
+  })
+
+  test('Does not preserve frozen object state', () =>
+  {
+    const origin = { foo:'bar', baz: 42, qux: true }
+
+    Object.freeze(origin)
+
+    assert.ok(Object.isFrozen(origin), 'Origin object should be frozen')
+
+    const cloned = deepclone(origin)
+
+    assert.deepStrictEqual(cloned, origin, 'Cloned nested object should be equal to the original')
+    assert.notStrictEqual(cloned,  origin, 'Not the same reference as the original')
+    assert.ok(false === Object.isFrozen(cloned), 'Cloned object should not be frozen')
   })
 
   test('Clones arrays', () =>

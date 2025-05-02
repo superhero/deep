@@ -66,7 +66,7 @@ export default function merge(a, b, ...c)
 
   return c.length
   ? merge(output, ...c)
-  : deepclone(output)
+  : deepclone(output, { preservesImutable: true })
 }
 
 function mergeAandB(a, b, seen)
