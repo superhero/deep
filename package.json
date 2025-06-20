@@ -1,8 +1,16 @@
 {
   "name": "@superhero/deep",
-  "version": "4.5.0",
+  "version": "4.7.0",
   "description": "A collection of deep structure operations",
-  "keywords": ["deep", "assign", "clone", "equal", "freeze", "intersect", "merge"],
+  "keywords": [
+    "deep",
+    "assign",
+    "clone",
+    "equal",
+    "freeze",
+    "intersect",
+    "merge"
+  ],
   "main": "index.js",
   "license": "MIT",
   "type": "module",
@@ -11,7 +19,13 @@
     "./*": "./*.js"
   },
   "scripts": {
-    "test": "node --trace-warnings --test --experimental-test-coverage"
+    "syntax-check": "syntax-check",
+    "test": "syntax-check; node --test --test-reporter=@superhero/audit/reporter --experimental-test-coverage"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@superhero/audit": "4.7.0",
+    "@superhero/syntax-check": "0.0.2"
   },
   "author": {
     "name": "Erik Landvall",
