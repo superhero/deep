@@ -1,6 +1,6 @@
 {
   "name": "@superhero/deep",
-  "version": "4.7.1",
+  "version": "4.7.2",
   "description": "A collection of deep structure operations",
   "keywords": [
     "deep",
@@ -24,7 +24,7 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@superhero/audit": "4.7.1",
+    "@superhero/audit": "4.7.2",
     "@superhero/syntax-check": "0.0.2"
   },
   "author": {
