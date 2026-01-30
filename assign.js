@@ -1,6 +1,7 @@
 export default function assign(a, ...b)
 {
   b.forEach((b) => assignB2A(a, b))
+  return a
 }
 
 function assignB2A(a, b)
@@ -15,16 +16,28 @@ function assignB2A(a, b)
     return a
   }
 
-  if(Object.prototype.toString.call(a) === '[object Array]'
-  && Object.prototype.toString.call(b) === '[object Array]')
+  const
+    aType = Object.prototype.toString.call(a),
+    bType = Object.prototype.toString.call(b)
+
+  if(aType === '[object Array]' && bType === '[object Array]')
   {
     return assignArray(a, b)
   }
 
-  if(Object.prototype.toString.call(a) === '[object Object]'
-  && Object.prototype.toString.call(b) === '[object Object]')
+  if(aType === '[object Object]' && bType === '[object Object]')
   {
     return assignObject(a, b)
+  }
+
+  if(aType === '[object Set]' && bType === '[object Set]')
+  {
+    return assignSet(a, b)
+  }
+
+  if(aType === '[object Map]' && bType === '[object Map]')
+  {
+    return assignMap(a, b)
   }
 
   return b
@@ -38,36 +51,82 @@ function assignArray(a, b)
   return a
 }
 
+function assignSet(a, b)
+{
+  for(const v of b)
+  {
+    a.add(v)
+  }
+  return a
+}
+
+function assignMap(a, b)
+{
+  for(const [k, v] of b)
+  {
+    if(a.has(k))
+    {
+      a.set(k, assignB2A(a.get(k), v))
+    }
+    else
+    {
+      a.set(k, v)
+    }
+  }
+  return a
+}
+
 /**
- * @param {Object} a 
- * @param {Object} b 
- * 
- * @throws {TypeError} If a property in "a" is also in "b", 
- *                     but the property in "a" is not configurable.
- * 
- * @returns {Object} a
+ * Mutates "a" by assigning properties from "b".
+ *
+ * Rules:
+ * - If both sides are plain objects, recurse.
+ * - If property exists in a:
+ *   - if configurable: redefine with b's descriptor (value is assigned/merged)
+ *   - else if writable and data property: write value
+ *   - else: leave as-is
+ * - Accessors are copied as accessors; never forced into data descriptors.
  */
 function assignObject(a, b)
 {
-  for (const key of Object.getOwnPropertyNames(b))
+  for(const key of Reflect.ownKeys(b))
   {
-    if(Object.prototype.toString.call(a[key]) === '[object Object]'
-    && Object.prototype.toString.call(b[key]) === '[object Object]')
-    {
-      assignObject(a[key], b[key])
-    }
-    else if(Object.hasOwnProperty.call(a, key))
-    {
-      const descriptor_a = Object.getOwnPropertyDescriptor(a, key)
+    const
+      hasA = Object.prototype.hasOwnProperty.call(a, key),
+      da   = hasA ? Object.getOwnPropertyDescriptor(a, key) : undefined,
+      db   = Object.getOwnPropertyDescriptor(b, key)
 
-      if(descriptor_a.configurable)
+    if(!db)
+    {
+      continue
+    }
+
+    const aIsData = !!da && ('value' in da)
+    const bIsData = 'value' in db
+
+    // recurse only when both are data props holding plain objects
+    if(hasA
+    && aIsData
+    && bIsData
+    && Object.prototype.toString.call(da.value) === '[object Object]'
+    && Object.prototype.toString.call(db.value) === '[object Object]')
+    {
+      assignObject(da.value, db.value)
+      continue
+    }
+
+    if(hasA)
+    {
+      // if not configurable, we can only write if it's a writable data prop
+      if(da && da.configurable)
       {
-        assignPropertyDescriptor(a, b, key)
+        assignPropertyDescriptor(a, da, db, key)
       }
-      else if(descriptor_a.writable)
+      else if(da && ('value' in da) && da.writable)
       {
-        descriptor_a.value = b[key]
-        Object.defineProperty(a, key, descriptor_a)
+        // only safe for data properties
+        const next = assignB2A(da.value, bIsData ? db.value : undefined)
+        Object.defineProperty(a, key, { ...da, value: next })
       }
       else
       {
@@ -76,16 +135,26 @@ function assignObject(a, b)
     }
     else
     {
-      assignPropertyDescriptor(a, b, key)
+      // define new property with b's descriptor, but merge the value if needed
+      assignPropertyDescriptor(a, undefined, db, key)
     }
   }
 
   return a
 }
 
-function assignPropertyDescriptor(a, b, key)
+function assignPropertyDescriptor(a, da, db, key)
 {
-  const descriptor_b = Object.getOwnPropertyDescriptor(b, key)
-  descriptor_b.value = assignB2A(a[key], b[key])
-  Object.defineProperty(a, key, descriptor_b)
+  // Accessor: copy as-is (no merging of get/set)
+  if(!('value' in db))
+  {
+    Object.defineProperty(a, key, db)
+    return
+  }
+
+  const aValue = da && ('value' in da) ? da.value : undefined
+  const next   = assignB2A(aValue, db.value)
+
+  const descriptor = { ...db, value: next }
+  Object.defineProperty(a, key, descriptor)
 }

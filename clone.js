@@ -1,95 +1,173 @@
 export default function clone(input, options = {}) 
 {
-  const seen = new WeakSet()
+  const seen = new WeakMap()
 
   options.preservesImutable   = options.preservesImutable   ?? false
   options.preservesEnumerable = options.preservesEnumerable ?? true
-  options.fallback            = options.fallback            ?? cloneFallback.bind(null, options, seen)
+  options.fallback            = options.fallback            ?? ((value) => cloneObject(options, seen, value))
 
-  return deepClone(input, options, seen)
+  return deepClone(options, seen, input)
 }
 
-function deepClone(value, options, seen) 
+function deepClone(options, seen, value) 
 {
+  let clone
+
   switch(Object.prototype.toString.call(value))
   {
-    case '[object Array]'  : return cloneArray(value, options, seen)
-    case '[object Object]' : return cloneObject(value, options, seen)
+    case '[object Array]'   : clone = cloneArray(options, seen, value)        ; break
+    case '[object Object]'  : clone = cloneObject(options, seen, value)       ; break
+    case '[object Set]'     : clone = cloneSet(options, seen, value)          ; break
+    case '[object Map]'     : clone = cloneMap(options, seen, value)          ; break
+    case '[object Date]'    : clone = new Date(value.getTime())               ; break
+    case '[object RegExp]'  : clone = new RegExp(value.source, value.flags)   ; break
+    default                 : clone = options.fallback(value)                 ; break
   }
 
-  return options.fallback(value)
-}
-
-function cloneArray(array, options, seen) 
-{
-  if(seen.has(array)) 
+  if(options.preservesImutable
+  && value && typeof value === 'object'
+  && clone && typeof clone === 'object')
   {
-    return array
-  }
-
-  seen.add(array)
-  return array.map((item) => deepClone(item, options, seen))
-}
-
-function cloneObject(obj, options, seen) 
-{
-  if(seen.has(obj)) 
-  {
-    return obj
-  }
-
-  seen.add(obj)
-
-  const output = {}
-
-  for(const key of Object.getOwnPropertyNames(obj)) 
-  {
-    if(options.preservesImutable)
+    if(false === Object.isExtensible(value))
     {
-      const descriptor = Object.getOwnPropertyDescriptor(obj, key)
-      Object.defineProperty(output, key, 
-      { 
-        enumerable    : options.preservesEnumerable ? descriptor.enumerable : true,
-        writable      : descriptor.writable, 
-        configurable  : descriptor.configurable, 
-        value         : deepClone(descriptor.value, options, seen) 
-      })
-      continue
+      Object.preventExtensions(clone)
     }
-    else if(options.preservesEnumerable)
+
+    if(Object.isSealed(value))
     {
-      const descriptor = Object.getOwnPropertyDescriptor(obj, key)
-      Object.defineProperty(output, key, 
-      { 
-        enumerable    : descriptor.enumerable, 
-        writable      : true, 
-        configurable  : true, 
-        value         : deepClone(descriptor.value, options, seen) 
-      })
-      continue
+      Object.seal(clone)
     }
-    else
+
+    if(Object.isFrozen(value))
     {
-      output[key] = deepClone(obj[key], options, seen)
+      Object.freeze(clone)
     }
   }
 
-  return output
+  return clone
 }
 
-function cloneFallback(options, seen, value)
+function cloneArray(options, seen, array) 
 {
-  if(typeof value !== 'object'
-  || value === null) 
+  const already = seen.get(array)
+
+  if(already) 
+  {
+    return already
+  }
+
+  const clone = new Array(array.length)
+
+  seen.set(array, clone)
+
+  for(let i = 0; i < array.length; i++)
+  {
+    clone[i] = deepClone(options, seen, array[i])
+  }
+
+  return clone
+}
+
+function cloneObject(options, seen, value)
+{
+  if(typeof value !== 'object' || value === null) 
   {
     return value
   }
 
-  const clone = Object.create(Object.getPrototypeOf(value))
-  for(const key in value) 
+  const already = seen.get(value)
+
+  if(already) 
   {
-    clone[key] = deepClone(value[key], options, seen)
+    return already
+  }
+
+  const clone = Object.create(Object.getPrototypeOf(value))
+
+  seen.set(value, clone)
+
+  for (const key of Reflect.ownKeys(value))
+  {
+    cloneProperty(options, seen, value, clone, key)
   }
 
   return clone
+}
+
+function cloneSet(options, seen, set)
+{
+  const already = seen.get(set)
+
+  if(already)
+  {
+    return already
+  }
+
+  const clone = new Set()
+  
+  seen.set(set, clone)
+
+  for(const value of set)
+  {
+    clone.add(deepClone(options, seen, value))
+  }
+
+  return clone
+}
+
+function cloneMap(options, seen, map)
+{
+  const already = seen.get(map)
+
+  if(already)
+  {
+    return already
+  }
+
+  const clone = new Map()
+  
+  seen.set(map, clone)
+
+  for(const [key, value] of map)
+  {
+    clone.set(
+      deepClone(options, seen, key),
+      deepClone(options, seen, value)
+    )
+  }
+
+  return clone
+}
+
+function cloneProperty(options, seen, src, target, key)
+{
+  const descriptor = Object.getOwnPropertyDescriptor(src, key)
+
+  if(!descriptor)
+  {
+    return
+  }
+
+  if('value' in descriptor)
+  {
+    const clonedValue = deepClone(options, seen, descriptor.value)
+
+    Object.defineProperty(target, key,
+    {
+      enumerable    : options.preservesEnumerable ? descriptor.enumerable   : true,
+      writable      : options.preservesImutable   ? descriptor.writable     : true,
+      configurable  : options.preservesImutable   ? descriptor.configurable : true,
+      value         : clonedValue
+    })
+  }
+  else
+  {
+    Object.defineProperty(target, key,
+    {
+      enumerable    : options.preservesEnumerable ? descriptor.enumerable   : true,
+      configurable  : options.preservesImutable   ? descriptor.configurable : true,
+      get           : descriptor.get,
+      set           : descriptor.set
+    })
+  }
 }

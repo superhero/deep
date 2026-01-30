@@ -109,7 +109,21 @@ suite('@superhero/deep/clone', () =>
     obj.self = obj
 
     const cloned = deepclone(obj)
-    assert.strictEqual(cloned.self, obj, 'Circular references should be preserved in the clone')
+
+    assert.notStrictEqual(cloned, obj)
+    assert.strictEqual(cloned.self, cloned)
+  })
+
+  test('Preserves shared references', () =>
+  {
+    const shared = { x: 1 }
+    const obj = { a: shared, b: shared }
+
+    const cloned = deepclone(obj)
+
+    assert.notStrictEqual(cloned, obj)
+    assert.strictEqual(cloned.a, cloned.b)
+    assert.notStrictEqual(cloned.a, shared)
   })
 
   test('Clones objects with null prototype', () =>

@@ -185,4 +185,165 @@ suite('@superhero/deep/assign', () =>
     deepassign(a, b)
     assert.deepStrictEqual(a, expected, 'Objects without conflicts should merge correctly')
   })
+
+  suite('Map/Set + accessors', () =>
+  {
+    test('Assigns sets as a union', () =>
+    {
+      const
+        a = new Set([1, 2, 3]),
+        b = new Set([3, 4, 5])
+
+      deepassign(a, b)
+
+      assert.deepStrictEqual(a, new Set([1, 2, 3, 4, 5]))
+    })
+
+    test('Assigns maps by key and merges values on conflict', () =>
+    {
+      const
+        a = new Map([['x', { foo: 1 }], ['y', 1]]),
+        b = new Map([['x', { bar: 2 }], ['z', 3]])
+
+      deepassign(a, b)
+
+      assert.ok(a instanceof Map)
+      assert.deepStrictEqual(a.get('x'), { foo: 1, bar: 2 })
+      assert.strictEqual(a.get('y'), 1)
+      assert.strictEqual(a.get('z'), 3)
+    })
+
+    test('Assigns symbol keys (including non-enumerables)', () =>
+    {
+      const k = Symbol('k')
+
+      const a = {}
+      const b = {}
+
+      Object.defineProperty(b, k,
+      {
+        value         : 42,
+        writable      : true,
+        configurable  : true,
+        enumerable    : false
+      })
+
+      deepassign(a, b)
+
+      const d = Object.getOwnPropertyDescriptor(a, k)
+      assert.strictEqual(d.value, 42)
+      assert.strictEqual(d.enumerable, false)
+    })
+
+    test('Does not invoke getters while assigning', () =>
+    {
+      const a = {}
+      const b = {}
+
+      let calls = 0
+
+      Object.defineProperty(a, 'foo',
+      {
+        enumerable    : true,
+        configurable  : true,
+        get() { calls++; return { foo: 1 } }
+      })
+
+      Object.defineProperty(b, 'foo',
+      {
+        enumerable    : true,
+        configurable  : true,
+        value         : { bar: 2 },
+        writable      : true
+      })
+
+      deepassign(a, b)
+
+      assert.strictEqual(calls, 0, 'Getter must not be invoked during assign')
+
+      const d = Object.getOwnPropertyDescriptor(a, 'foo')
+      assert.ok('value' in d)
+      assert.deepStrictEqual(d.value, { bar: 2 })
+    })
+
+    test('Copies accessor descriptors from b when a does not have the property', () =>
+    {
+      const a = {}
+      const b = {}
+
+      const getB = () => 123
+
+      Object.defineProperty(b, 'foo',
+      {
+        enumerable    : true,
+        configurable  : true,
+        get           : getB
+      })
+
+      deepassign(a, b)
+
+      const d = Object.getOwnPropertyDescriptor(a, 'foo')
+      assert.strictEqual(d.get, getB)
+      assert.strictEqual(d.set, undefined)
+      assert.strictEqual(d.value, undefined)
+    })
+
+    test('Does not override a non-configurable accessor on a', () =>
+    {
+      const a = {}
+      const b = {}
+
+      const getA = () => 1
+      const getB = () => 2
+
+      Object.defineProperty(a, 'foo',
+      {
+        enumerable    : true,
+        configurable  : false,
+        get           : getA
+      })
+
+      Object.defineProperty(b, 'foo',
+      {
+        enumerable    : true,
+        configurable  : true,
+        get           : getB
+      })
+
+      deepassign(a, b)
+
+      const d = Object.getOwnPropertyDescriptor(a, 'foo')
+      assert.strictEqual(d.get, getA, 'Non-configurable accessor must remain')
+    })
+
+    test('Assigns into writable non-configurable data properties', () =>
+    {
+      const a = {}
+      const b = {}
+
+      Object.defineProperty(a, 'foo',
+      {
+        enumerable    : false,
+        configurable  : false,
+        writable      : true,
+        value         : 1
+      })
+
+      Object.defineProperty(b, 'foo',
+      {
+        enumerable    : true,
+        configurable  : true,
+        writable      : true,
+        value         : 2
+      })
+
+      deepassign(a, b)
+
+      const d = Object.getOwnPropertyDescriptor(a, 'foo')
+      assert.strictEqual(d.value, 2)
+      assert.strictEqual(d.configurable, false)
+      assert.strictEqual(d.enumerable, false)
+      assert.strictEqual(d.writable, true)
+    })
+  })
 })

@@ -1,66 +1,8 @@
 import deepclone from '@superhero/deep/clone'
 
-/**
- * When merging two objects [object Object], a new object is created with the 
- * properties of both objects defined. The descriptor of the property in the 
- * new object is determined by the descriptors of the properties in the two 
- * objects being merged. The priority of the property descriptor is set on the 
- * new object according to the more restrictive definition in the two sources.
- * 
- * @example if the descriptor of the property in object "a" has "configurable" 
- * set to "false", and the descriptor of the property in object "b" has the 
- * "configurable" set to "true", the new object will have the descriptor for 
- * "configurable" set to "false".
- * 
- * @example if the descriptor of the property in object "a" has "enumerable" 
- * set to "true", and the descriptor of the property in object "b" has the 
- * "enumerable" set to "true", the new object will have the descriptor for 
- * "enumerable" set to "true".
- * 
- * @example if the descriptor of the property in object "a" has "writable" set 
- * to "false", and the descriptor of the property in object "b" has the 
- * "writable" set to "false", the new object will have the descriptor for 
- * "writable" set to "false".
- * 
- * ----------------------------------------------------------------------------
- * 
- * When merging two nested objects [object Object], and there is a circular 
- * reference, the merge will stop at the circular reference and return the
- * object that contains the circular reference.
- * 
- * ----------------------------------------------------------------------------
- * 
- * When merging a and b of different types, the value of b is returned.
- * 
- * @example if the type of the property in object "a" is object "c", and the 
- * type of the property in object "b" is a number, then the value of the 
- * property in the new object will be the number.
- * 
- * @example if the type of the property in object "a" is a string, and the type
- * of the property in object "b" is object "c", then the value of the property 
- * in the new object will be the object "c".
- * 
- * ----------------------------------------------------------------------------
- * 
- * When merging two arrays [object Array], a new array is created with the 
- * unique values of both arrays. The order of the values in the new array is 
- * determined by the order of the values in the two arrays being merged.
- * 
- * @example if array "a" with values [1, 2, 3] is merged with array "b" with 
- * values [2, 3, 4], the new array will have values [1, 2, 3, 4].
- * 
- * @example if array "a" with values [2, 3, 4] is merged with array "b" with 
- * values [1, 2, 3], the new array will have values [2, 3, 4, 1].
- * 
- * @example if array "a" with values [1, 2, 3] is merged with an empty array 
- * "b", the new array will still have values [1, 2, 3].
- * 
- * @example if array "a" with values [1, 1, 2, 2] is merged with array "b" with
- * values [2, 2, 3, 3], the new array will have values [1, 2, 3].
- */
 export default function merge(a, b, ...c)
 {
-  const 
+  const
     seen    = new WeakSet,
     output  = mergeAandB(a, b, seen)
 
@@ -97,6 +39,18 @@ function mergeAandB(a, b, seen)
     return mergeObject(a, b, seen)
   }
 
+  if('[object Set]' === aType
+  && '[object Set]' === bType)
+  {
+    return mergeSet(a, b)
+  }
+
+  if('[object Map]' === aType
+  && '[object Map]' === bType)
+  {
+    return mergeMap(a, b, seen)
+  }
+
   return b
 }
 
@@ -105,6 +59,37 @@ function mergeArray(a, b)
   return [...new Set(a.concat(b))]
 }
 
+function mergeSet(a, b)
+{
+  return new Set([...a, ...b])
+}
+
+function mergeMap(a, b, seen)
+{
+  if(seen.has(a))
+  {
+    return b
+  }
+
+  seen.add(a)
+
+  const output = new Map(a)
+
+  for(const [key, bValue] of b)
+  {
+    if(output.has(key))
+    {
+      const aValue = output.get(key)
+      output.set(key, mergeAandB(aValue, bValue, seen))
+    }
+    else
+    {
+      output.set(key, bValue)
+    }
+  }
+
+  return output
+}
 function mergeObject(a, b, seen)
 {
   if(seen.has(a))
@@ -114,43 +99,100 @@ function mergeObject(a, b, seen)
 
   seen.add(a)
 
-  const output = {}
+  const output = Object.create(Object.getPrototypeOf(a))
 
-  for(const key of Object.getOwnPropertyNames(a))
+  // copy keys unique to a
+  for(const key of Reflect.ownKeys(a))
   {
-    if(key in b)
+    if(Object.prototype.hasOwnProperty.call(b, key))
     {
       continue
     }
-    else
+
+    const descriptor = Object.getOwnPropertyDescriptor(a, key)
+    if(descriptor)
     {
-      const descriptor = Object.getOwnPropertyDescriptor(a, key)
       Object.defineProperty(output, key, descriptor)
     }
   }
 
-  for(const key of Object.getOwnPropertyNames(b))
+  // merge/copy keys from b
+  for(const key of Reflect.ownKeys(b))
   {
-    if(key in a)
+    if(Object.prototype.hasOwnProperty.call(a, key))
     {
-      const
-        descriptor_a = Object.getOwnPropertyDescriptor(a, key),
-        descriptor_b = Object.getOwnPropertyDescriptor(b, key)
+      const da = Object.getOwnPropertyDescriptor(a, key)
+      const db = Object.getOwnPropertyDescriptor(b, key)
 
-      Object.defineProperty(output, key,
+      if(!da || !db)
       {
-        configurable : descriptor_a.configurable && descriptor_b.configurable,
-        enumerable   : descriptor_a.enumerable   && descriptor_b.enumerable,
-        writable     : descriptor_a.writable     && descriptor_b.writable,
-        value        : mergeAandB(a[key], b[key], seen)
-      })
+        continue
+      }
+
+      Object.defineProperty(output, key, mergeDescriptor(da, db, seen))
     }
     else
     {
       const descriptor = Object.getOwnPropertyDescriptor(b, key)
-      Object.defineProperty(output, key, descriptor)
+      if(descriptor)
+      {
+        Object.defineProperty(output, key, descriptor)
+      }
     }
   }
 
   return output
+}
+
+function mergeDescriptor(da, db, seen)
+{
+  const enumerable   = (da.enumerable   ?? true) && (db.enumerable   ?? true)
+  const configurable = (da.configurable ?? true) && (db.configurable ?? true)
+
+  const aIsData = 'value' in da
+  const bIsData = 'value' in db
+
+  // data + data: keep “most restrictive” flags and merge the values
+  if(aIsData && bIsData)
+  {
+    const writable = (da.writable ?? true) && (db.writable ?? true)
+
+    return {
+      enumerable,
+      configurable,
+      writable,
+      value: mergeAandB(da.value, db.value, seen)
+    }
+  }
+
+  // accessor + accessor: keep “most restrictive” flags and combine get/set
+  // (b wins when both define the same accessor)
+  if(!aIsData && !bIsData)
+  {
+    return {
+      enumerable,
+      configurable,
+      get: db.get ?? da.get,
+      set: db.set ?? da.set
+    }
+  }
+
+  // mixed (data vs accessor): do NOT evaluate accessors; prefer b’s shape,
+  // but apply “most restrictive” flags
+  if(bIsData)
+  {
+    return {
+      enumerable,
+      configurable,
+      writable: (da.writable ?? true) && (db.writable ?? true),
+      value: db.value
+    }
+  }
+
+  return {
+    enumerable,
+    configurable,
+    get: db.get,
+    set: db.set
+  }
 }
