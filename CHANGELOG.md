@@ -1,4 +1,10 @@
 ---
+#### v4.8.2
+---
+
+Better support for different data structures, mainly Map and Set
+
+---
 #### v4.8.1
 ---\n\nVersion alignment...
 
